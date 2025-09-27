@@ -46,9 +46,7 @@ class _RequestPanelState extends State<RequestPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: DefaultTabController(
+    return DefaultTabController(
         length: 2,
         child: LayoutBuilder(builder: (context, constraints) {
           final availableHeight = constraints.maxHeight;
@@ -230,7 +228,6 @@ class _RequestPanelState extends State<RequestPanel> {
             ],
           );
         }),
-      ),
-    );
+      );
   }
 }

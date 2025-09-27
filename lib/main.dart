@@ -60,6 +60,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Color codeColor(String code) {
     if (code == 'N/A') return Colors.grey;
+    if(code == "POST") return Colors.orangeAccent;
+    if(code == "GET") return Colors.greenAccent.shade400;
+    if(code == "DELETE") return Colors.redAccent.shade200;
+    if(code == "PUT") return Colors.lightBlueAccent.shade400;
+    if(code == "PATCH") return Colors.yellow.shade600;
+    if(code == "OPTIONS") return Colors.purpleAccent.shade400;
+    if(code == "HEAD") return Colors.deepPurpleAccent.shade400;
+    if(code == "CONNECT") return Colors.black87;
     final n = int.tryParse(code) ?? 0;
     if (n >= 200 && n < 300) return Colors.greenAccent.shade400;
     if (n >= 300 && n < 400) return Colors.yellow.shade600;

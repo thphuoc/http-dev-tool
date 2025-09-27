@@ -14,17 +14,13 @@ class BottomPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Card(
-        color: Colors.grey[850],
-        child: Column(
+    return Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
                   child: Text('Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
                 IconButton(onPressed: onCollapse, icon: const Icon(Icons.close)),
@@ -44,8 +40,6 @@ class BottomPanel extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
+        );
   }
 }

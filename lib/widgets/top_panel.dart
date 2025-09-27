@@ -15,13 +15,7 @@ class TopPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(0),
-      child: Card(
-        color: Colors.grey[850],
-        child: Padding(
-          padding: const EdgeInsets.all(0.0),
-          child: DataTable2(
+    return DataTable2(
             columnSpacing: 0,
             horizontalMargin: 8,
             minWidth: 800,
@@ -29,16 +23,16 @@ class TopPanel extends StatelessWidget {
             showCheckboxColumn: false,
             columns: const [
               // Method and HTTP Code are compact columns sized to their content.
-              DataColumn2(label: Text('Method'), fixedWidth: 80),
-              DataColumn2(label: Text('HTTP Code'), fixedWidth: 100),
-              DataColumn2(label: Text('Request At'), fixedWidth: 100),
-              DataColumn2(label: Text('Response At'), fixedWidth: 100),
-              DataColumn2(label: Text('Total Time'), fixedWidth: 100),
-              DataColumn(label: Text('URL')),
+              DataColumn2(label: Text('Method'), fixedWidth: 80, size: ColumnSize.S),
+              DataColumn2(label: Text('Code'), fixedWidth: 80, size: ColumnSize.S),
+              DataColumn2(label: Text('Duration'), fixedWidth: 80, size: ColumnSize.S),
+              DataColumn2(label: Text('URL'), size: ColumnSize.S),
             ],
             rows: List<DataRow>.generate(entries.length, (i) {
               final e = entries[i];
               final selectedRow = i == selectedIndex;
+              Color? colorMethod = codeColor(e.method);
+              Color? colorHttpCode = codeColor(e.code);
               return DataRow(
                 selected: selectedRow,
                 color: WidgetStateProperty.resolveWith<Color?>((states) {
@@ -46,20 +40,19 @@ class TopPanel extends StatelessWidget {
                   return Colors.grey[800];
                 }),
                 cells: [
-                  DataCell(Text(e.method)),
+                  DataCell(Text(e.method, textAlign: TextAlign.center, style: TextStyle(color: colorMethod, fontSize: 12))),
                   // Smaller code badge so the column stays compact.
                   DataCell(Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                     decoration: BoxDecoration(
-                      color: codeColor(e.code),
+                      color: colorHttpCode,
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: SizedBox(width: 48, child: Text(e.code, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black, fontSize: 12))),
+                    child: SizedBox(width: 30, child: Text(e.code, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black, fontSize: 12))),
                   )),
-                  DataCell(Text('${e.reqAt.hour.toString().padLeft(2, '0')}:${e.reqAt.minute.toString().padLeft(2, '0')}')),
-                  DataCell(Text(e.resAt == null ? 'N/A' : '${e.resAt!.hour.toString().padLeft(2, '0')}:${e.resAt!.minute.toString().padLeft(2, '0')}')),
+
                   DataCell(Text(e.totalTime)),
-                  DataCell(SizedBox(width: 600, child: Text(e.url, overflow: TextOverflow.ellipsis))),
+                  DataCell(SizedBox(width: double.infinity, child: Text(e.url, overflow: TextOverflow.ellipsis))),
                 ],
                 onSelectChanged: (v) {
                   // Always call onSelect when the row is interacted with so that
@@ -69,9 +62,6 @@ class TopPanel extends StatelessWidget {
                 },
               );
             }),
-          ),
-        ),
-      ),
-    );
+          );
   }
 }
