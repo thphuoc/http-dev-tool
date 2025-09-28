@@ -37,6 +37,8 @@ dependencies:
   # UI packages used by the desktop HTTP inspector
   multi_split_view: ^3.6.0
   data_table_2: ^2.6.0
+  pretty_json_view: ^0.0.5
+  json_view: ^0.4.2
 
 dev_dependencies:
   flutter_test:

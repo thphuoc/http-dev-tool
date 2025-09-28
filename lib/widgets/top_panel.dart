@@ -17,7 +17,9 @@ class TopPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return DataTable2(
             columnSpacing: 0,
-            horizontalMargin: 8,
+            horizontalMargin: 15,
+            dataRowHeight: 30,
+            headingRowHeight: 30,
             minWidth: 800,
             // Hide the built-in checkbox column when rows are selectable
             showCheckboxColumn: false,
@@ -36,8 +38,14 @@ class TopPanel extends StatelessWidget {
               return DataRow(
                 selected: selectedRow,
                 color: WidgetStateProperty.resolveWith<Color?>((states) {
-                  if (i % 2 == 0) return Colors.grey[850];
-                  return Colors.grey[800];
+                  (Set<WidgetState> states) {
+                    if (states.contains(WidgetState.hovered)) {
+                      return Colors.lightBlueAccent.withAlpha(100);
+                    } else {
+                      return null;
+                    }
+                  };
+                  return null;
                 }),
                 cells: [
                   DataCell(Text(e.method, textAlign: TextAlign.center, style: TextStyle(color: colorMethod, fontSize: 12))),

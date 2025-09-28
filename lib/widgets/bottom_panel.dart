@@ -14,6 +14,7 @@ class BottomPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('BottomPanel build: ${entry.responseHeaders.entries.first.key}');
     return Column(
           children: [
             Row(

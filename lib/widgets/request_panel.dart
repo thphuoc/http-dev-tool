@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:httpdevtool/widgets/resizable_key_value_table.dart';
 
 import '../models/http_entry.dart';
-import 'key_value_table.dart';
-import 'code_editor_box.dart';
+import 'package:httpdevtool/widgets/response_viewer.dart';
 
 enum RequestBodyMode { form, json, raw, params }
 
@@ -30,198 +30,34 @@ class _RequestPanelState extends State<RequestPanel> {
     }
   }
 
-  void _setMode(RequestBodyMode m) => setState(() => mode = m);
-
-  Widget _buildBodyContent() {
-    switch (mode) {
-      case RequestBodyMode.form:
-        return KeyValueTable(map: widget.entry.requestForm);
-      case RequestBodyMode.params:
-        return KeyValueTable(map: widget.entry.requestParams);
-      case RequestBodyMode.json:
-      case RequestBodyMode.raw:
-        return CodeEditorBox(content: widget.entry.requestBody);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-        length: 2,
+        length: 4,
         child: LayoutBuilder(builder: (context, constraints) {
-          final availableHeight = constraints.maxHeight;
-          const compactThreshold = 120.0;
 
           Widget tabBarSized = SizedBox(
-            height: 36,
             child: const TabBar(
-              tabs: [Tab(text: 'Headers'), Tab(text: 'Body')],
-              labelPadding: EdgeInsets.symmetric(horizontal: 8),
-              indicatorWeight: 2,
+              tabs: [Tab(text: 'Headers'), Tab(text: 'Parameters'), Tab(text: 'Form data'), Tab(text: 'Body')],
+              labelPadding: EdgeInsets.symmetric(horizontal: 0),
+              indicatorWeight: 1,
             ),
           );
-
-          if (availableHeight.isFinite && availableHeight < compactThreshold) {
-            final safeHeight = (availableHeight - 1.0).clamp(0.0, double.infinity);
-            return SizedBox(
-              height: safeHeight,
-              child: Column(
-                children: [
-                  tabBarSized,
-                  const Divider(color: Colors.white10, thickness: 1),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: KeyValueTable(map: widget.entry.requestHeaders),
-                          ),
-                          const Divider(color: Colors.white10),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                // Radio group
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 4,
-                                  children: [
-                                    SizedBox(
-                                      width: 180,
-                                      child: RadioListTile<RequestBodyMode>(
-                                        title: const Text('Form data'),
-                                        value: RequestBodyMode.form,
-                                        groupValue: mode,
-                                        onChanged: (v) => _setMode(v ?? RequestBodyMode.form),
-                                        dense: true,
-                                        visualDensity: VisualDensity.compact,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 180,
-                                      child: RadioListTile<RequestBodyMode>(
-                                        title: const Text('Parameters'),
-                                        value: RequestBodyMode.params,
-                                        groupValue: mode,
-                                        onChanged: (v) => _setMode(v ?? RequestBodyMode.params),
-                                        dense: true,
-                                        visualDensity: VisualDensity.compact,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 120,
-                                      child: RadioListTile<RequestBodyMode>(
-                                        title: const Text('Json'),
-                                        value: RequestBodyMode.json,
-                                        groupValue: mode,
-                                        onChanged: (v) => _setMode(v ?? RequestBodyMode.json),
-                                        dense: true,
-                                        visualDensity: VisualDensity.compact,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 120,
-                                      child: RadioListTile<RequestBodyMode>(
-                                        title: const Text('Raw'),
-                                        value: RequestBodyMode.raw,
-                                        groupValue: mode,
-                                        onChanged: (v) => _setMode(v ?? RequestBodyMode.raw),
-                                        dense: true,
-                                        visualDensity: VisualDensity.compact,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const Divider(color: Colors.white10),
-                                _buildBodyContent(),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
 
           return Column(
             children: [
               tabBarSized,
-              const Divider(color: Colors.white10, thickness: 1),
               Expanded(
                 child: TabBarView(
                   children: [
                     // Headers tab
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: KeyValueTable(map: widget.entry.requestHeaders),
-                    ),
-
-                    // Body tab with radio group to choose representation
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          // Radio group
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              SizedBox(
-                                width: 180,
-                                child: RadioListTile<RequestBodyMode>(
-                                  title: const Text('Form data'),
-                                  value: RequestBodyMode.form,
-                                  groupValue: mode,
-                                  onChanged: (v) => _setMode(v ?? RequestBodyMode.form),
-                                  dense: true,
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              ),
-                              SizedBox(
-                                width: 180,
-                                child: RadioListTile<RequestBodyMode>(
-                                  title: const Text('Parameters'),
-                                  value: RequestBodyMode.params,
-                                  groupValue: mode,
-                                  onChanged: (v) => _setMode(v ?? RequestBodyMode.params),
-                                  dense: true,
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              ),
-                              SizedBox(
-                                width: 120,
-                                child: RadioListTile<RequestBodyMode>(
-                                  title: const Text('Json'),
-                                  value: RequestBodyMode.json,
-                                  groupValue: mode,
-                                  onChanged: (v) => _setMode(v ?? RequestBodyMode.json),
-                                  dense: true,
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              ),
-                              SizedBox(
-                                width: 120,
-                                child: RadioListTile<RequestBodyMode>(
-                                  title: const Text('Raw'),
-                                  value: RequestBodyMode.raw,
-                                  groupValue: mode,
-                                  onChanged: (v) => _setMode(v ?? RequestBodyMode.raw),
-                                  dense: true,
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              ),
-                              
-                            ],
-                          ),
-                          const Divider(color: Colors.white10),
-                          Expanded(child: _buildBodyContent()),
-                        ],
-                      ),
-                    ),
+                    ResizableKeyValueTable(map: widget.entry.requestHeaders),
+                    // Parameters tab
+                    ResizableKeyValueTable(map: widget.entry.requestParams),
+                    // Form data tab
+                    ResizableKeyValueTable(map: widget.entry.requestForm),
+                    // Json tab
+                    ResponseViewer(content: widget.entry.requestBody),
                   ],
                 ),
               ),
