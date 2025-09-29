@@ -28,31 +28,25 @@ class _ResponsePanelState extends State<ResponsePanel> {
     }
   }
 
-  void _setView(ResponseBodyView v) => setState(() => view = v);
-
   @override
   Widget build(BuildContext context) {
-    print('ResponsePanel build');
-    print('First header item: ${widget.entry.responseHeaders.entries.first.key}');
     return DefaultTabController(
       length: 2,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          Widget tabBarSized = SizedBox(
-            child: const TabBar(
-              tabs: [
-                Tab(text: 'Headers'),
-                Tab(text: 'Body')
-              ],
-              labelPadding: EdgeInsets.symmetric(horizontal: 0),
-              indicatorWeight: 1,
-            ),
-          );
 
           // Normal layout
           return Column(
             children: [
-              tabBarSized,
+              TabBar(
+                tabs: [
+                  Tab(text: 'Headers', height: 30),
+                  Tab(text: 'Body', height: 30)
+                ],
+                tabAlignment: TabAlignment.start,
+                isScrollable: true,
+                indicatorSize: TabBarIndicatorSize.tab,
+              ),
               Expanded(
                 child: TabBarView(
                   children: [

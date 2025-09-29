@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ResizableKeyValueTable extends StatefulWidget {
-  Map<String, String> map;
-  ResizableKeyValueTable({required this.map, super.key});
+  final Map<String, String> map;
+  const ResizableKeyValueTable({required this.map, super.key});
 
   @override
   State<ResizableKeyValueTable> createState() => _ResizableKeyValueTableState();
@@ -14,7 +14,6 @@ class _ResizableKeyValueTableState extends State<ResizableKeyValueTable> {
   @override
   Widget build(BuildContext context) {
     final entries = widget.map.entries.toList();
-    // print('First header item: ${entries.isNotEmpty ? entries[0].key : 'No headers'}');
     return LayoutBuilder(
       builder: (context, constraints) {
         return ListView.builder(

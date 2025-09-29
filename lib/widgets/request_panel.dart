@@ -33,37 +33,36 @@ class _RequestPanelState extends State<RequestPanel> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-        length: 4,
-        child: LayoutBuilder(builder: (context, constraints) {
-
-          Widget tabBarSized = SizedBox(
-            child: const TabBar(
-              tabs: [Tab(text: 'Headers'), Tab(text: 'Parameters'), Tab(text: 'Form data'), Tab(text: 'Body')],
-              labelPadding: EdgeInsets.symmetric(horizontal: 0),
-              indicatorWeight: 1,
-            ),
-          );
-
-          return Column(
-            children: [
-              tabBarSized,
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    // Headers tab
-                    ResizableKeyValueTable(map: widget.entry.requestHeaders),
-                    // Parameters tab
-                    ResizableKeyValueTable(map: widget.entry.requestParams),
-                    // Form data tab
-                    ResizableKeyValueTable(map: widget.entry.requestForm),
-                    // Json tab
-                    ResponseViewer(content: widget.entry.requestBody),
-                  ],
-                ),
-              ),
+      length: 4,
+      child: Column(
+        children: [
+          TabBar(
+            tabs: [
+              Tab(text: 'Headers', height: 30),
+              Tab(text: 'Parameters', height: 30),
+              Tab(text: 'Form data', height: 30),
+              Tab(text: 'Body', height: 30),
             ],
-          );
-        }),
-      );
+            tabAlignment: TabAlignment.start,
+            isScrollable: true,
+            indicatorSize: TabBarIndicatorSize.tab,
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                // Headers tab
+                ResizableKeyValueTable(map: widget.entry.requestHeaders),
+                // Parameters tab
+                ResizableKeyValueTable(map: widget.entry.requestParams),
+                // Form data tab
+                ResizableKeyValueTable(map: widget.entry.requestForm),
+                // Json tab
+                ResponseViewer(content: widget.entry.requestBody),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
