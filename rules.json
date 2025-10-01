@@ -1,0 +1,20 @@
+// example rules.json entry
+[
+  {
+    "id": "r1",
+    "match": {
+      "host": "*.example.com",
+      "path_regex": "^/api/v1/",
+      "method": "*"
+    },
+    "actions": {
+      "status": 401,
+      "body": "Hello",
+      "headers": {
+        "x-injected": "true"
+      }
+    },
+    "enabled": true
+  }
+]
+

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:httpdevtool/widgets/splitter_panel.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 
 import 'models/http_entry.dart';
@@ -28,7 +29,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int selectedIndex = 0;
   bool detailsExpanded = false;
-  double firstColumnWidth = 200;
+  double firstColumnHeight = 200;
   bool _hovering = false;
   bool _resizing = false;
   late final windowHeight = MediaQuery.of(context).size.height;
@@ -69,62 +70,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         });
       },
     );
-    return Scaffold(
-      appBar: AppBar(title: const Text('HTTP Inspector')),
-      body: LayoutBuilder(
-        builder: (ctx, constraints) {
-          return detailsExpanded
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(height: firstColumnWidth, child: top),
-                    MouseRegion(
-                      cursor: SystemMouseCursors.resizeUpDown,
-                      onHover: (event) => setState(() {_hovering = true;}),
-                      onExit: (event) => setState(() {_hovering = false;}),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTapDown: (details) => setState(() {_resizing = true;}),
-                        onTapCancel: () => setState(() {_resizing = false;}),
-                        onVerticalDragEnd: (details) => setState(() {_resizing = false;}),
-                        onVerticalDragUpdate: (details) {
-                          setState(() {
-                            _resizing = true;
-                            firstColumnWidth =
-                                (firstColumnWidth + details.delta.dy).clamp(
-                                  0,
-                                  windowHeight - 200,
-                                );
-                          });
-                        },
-                        child: SizedBox(
-                          height: 6,
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            child: Container(
-                              height: (_hovering || _resizing) ? 6 : 1, // visible line width
-                              color: (_hovering || _resizing)
-                                  ? Colors
-                                        .blue // màu khi hover
-                                  : const Color.fromARGB(255, 94, 93, 93),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: BottomPanel(
+    final bottom = BottomPanel(
                         entry: mockEntries[selectedIndex],
                         onCollapse: () {
                           setState(() {
                             detailsExpanded = false;
                           });
                         },
-                      ),
-                    ),
-                  ],
-                )
-              : Expanded(child: top);
+                      );
+    return Scaffold(
+      appBar: AppBar(title: const Text('HTTP Inspector')),
+      body: LayoutBuilder(
+        builder: (ctx, constraints) {
+          
+          return SplitterPanel(
+            firstChild: top,
+            secondChild: bottom,
+            isHideSecondChild: !detailsExpanded,
+            isVertical: true,
+          );
         },
       ),
     );
