@@ -15,6 +15,8 @@ class ProxyServer {
   List<RewriteRule> _activeRules = [];
   StreamSubscription<FileSystemEvent>? _rulesWatcherSub;
   final MitmHandler mitmHandler;
+  String _listenHost = '0.0.0.0';
+  int _listenPort = Config.defaultPort;
 
   ProxyServer({required this.mitmHandler}) {
     _ruleStore = RuleStore(Config.rulesFilePath);
@@ -35,6 +37,8 @@ class ProxyServer {
   }
 
   Future<void> startProxy(String host, int port) async {
+    _listenHost = host;
+    _listenPort = port;
     if (!Directory(Config.certsDir).existsSync()) {
       stderr.writeln('certs dir "${Config.certsDir}" missing. Create it and put ${Config.rootKeyFile} & ${Config.rootCertFile}.');
       exit(2);
@@ -97,6 +101,13 @@ class ProxyServer {
       if (hostHeader == null) { client.destroy(); return; }
       final host = hostHeader.split(':').first;
       final port = hostHeader.contains(':') ? int.tryParse(hostHeader.split(':').last) ?? 80 : 80;
+      final path = HttpParser.extractPathFromRequestStartLine(msg.startLine);
+
+      // if the request is directed to this proxy, serve cert endpoints
+      if (_shouldServeLocal(host, port)) {
+        await _serveLocalEndpoint(client, path);
+        return;
+      }
       Socket upstream;
       try {
         upstream = await Socket.connect(host, port);
@@ -116,7 +127,6 @@ class ProxyServer {
           return;
         }
         final statusCode = HttpParser.parseStatusCode(respMsg.startLine) ?? 200;
-        final path = HttpParser.extractPathFromRequestStartLine(msg.startLine);
         final method = HttpParser.extractMethodFromRequestStartLine(msg.startLine);
         final rule = findMatchingRule(_activeRules, host: host, path: path, method: method, originalStatus: statusCode);
         if (rule != null) {
@@ -147,6 +157,74 @@ class ProxyServer {
 
   // --------------- CLI helpers moved from main ---------------
   String _genId() => '${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}-${Random().nextInt(100000)}';
+
+  bool _shouldServeLocal(String host, int port) {
+    if (port != _listenPort) return false;
+    if (_listenHost == '0.0.0.0' || _listenHost == '::') return true;
+    if (host == _listenHost) return true;
+    if (host == 'localhost' || host == '127.0.0.1') return _listenHost == '127.0.0.1' || _listenHost == 'localhost';
+    return false;
+  }
+
+  Future<void> _serveLocalEndpoint(Socket client, String path) async {
+    if (path == '/' || path.isEmpty) {
+      final html = '<html><head><title>MITM Proxy</title></head><body>'
+          '<h1>MITM Proxy</h1>'
+          '<p>Nhấn vào liên kết để tải Root CA:</p>'
+          '<p><a href="/cert">Download Root CA (CRT)</a></p>'
+          '</body></html>';
+      final body = utf8.encode(html);
+      final headers = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: ${body.length}\r\nConnection: close\r\n\r\n';
+      client.add(utf8.encode(headers));
+      client.add(body);
+      await client.flush();
+      client.destroy();
+      return;
+    }
+
+    if (path == '/cert' || path == '/rootCA.crt') {
+      final crtPath = '${Config.certsDir}/rootCA.crt';
+      var crtFile = File(crtPath);
+      if (!await crtFile.exists()) {
+        // Try to generate from PEM if available
+        final pemPath = '${Config.certsDir}/${Config.rootCertFile}';
+        final pemFile = File(pemPath);
+        if (await pemFile.exists()) {
+          try {
+            final res = await Process.run('openssl', ['x509', '-outform', 'der', '-in', pemPath, '-out', crtPath], runInShell: true);
+            if (res.exitCode != 0) {
+              stderr.writeln('Failed to generate rootCA.crt: ${res.stderr}');
+            }
+          } catch (e) {
+            stderr.writeln('Failed to run openssl to generate rootCA.crt: $e');
+          }
+        }
+      }
+      if (!await crtFile.exists()) {
+        final notFound = 'HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n';
+        client.add(utf8.encode(notFound));
+        await client.flush();
+        client.destroy();
+        return;
+      }
+      final bytes = await crtFile.readAsBytes();
+      final headers = 'HTTP/1.1 200 OK\r\n'
+          'Content-Type: application/x-x509-ca-cert\r\n'
+          'Content-Disposition: attachment; filename="rootCA.crt"\r\n'
+          'Content-Length: ${bytes.length}\r\n'
+          'Connection: close\r\n\r\n';
+      client.add(utf8.encode(headers));
+      client.add(bytes);
+      await client.flush();
+      client.destroy();
+      return;
+    }
+
+    final notFound = 'HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n';
+    client.add(utf8.encode(notFound));
+    await client.flush();
+    client.destroy();
+  }
 
   Future<void> addRule({required String host, required String path, required String method, int? matchStatus, int? status, String? body, Map<String, String>? headers}) async {
     final rules = await _ruleStore.load();

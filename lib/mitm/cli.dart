@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart';
@@ -19,6 +18,12 @@ Future<void> mitmMain(List<String> argv) async {
 
   final genCert = parser.addCommand('gen-cert');
   genCert.addFlag('force', negatable: false, help: 'Force regen');
+
+  // Generate root CA .crt from existing rootCA.pem
+  final genRootCrt = parser.addCommand('gen-root-crt');
+  genRootCrt.addOption('out', help: 'Output .crt path', defaultsTo: '${Config.certsDir}/rootCA.crt');
+  genRootCrt.addOption('host', help: 'Proxy host for guidance URL');
+  genRootCrt.addOption('port', help: 'Proxy port for guidance URL');
 
   final rewrite = parser.addCommand('rewrite');
   final rewriteAdd = rewrite.addCommand('add');
@@ -67,6 +72,13 @@ Future<void> mitmMain(List<String> argv) async {
     case 'gen-cert':
       await _handleGenCert(cmd.rest, force: cmd['force'] as bool, certManager: certManager);
       break;
+    case 'gen-root-crt':
+      await _handleGenRootCrt(
+        outPath: cmd['out'] as String,
+        host: cmd['host'] as String?,
+        port: cmd['port'] != null ? int.tryParse(cmd['port'] as String) : null,
+      );
+      break;
     case 'rewrite':
       final sub = cmd.command;
       if (sub == null) { print('rewrite needs a subcommand'); _printRewriteHelp(); return; }
@@ -103,6 +115,7 @@ void _printHelp() {
   print('Commands:');
   print('  start           Start proxy (e.g. start -p 8888)');
   print('  gen-cert        Generate leaf cert for a host (args: host)');
+  print('  gen-root-crt    Convert rootCA.pem to rootCA.crt and show guidance');
   print('  rewrite add     Add a rewrite rule');
   print('  rewrite list    List rules');
   print('  rewrite rm      Remove rule');
@@ -166,6 +179,38 @@ Future<void> _cmdRewriteAdd(ArgResults args, ProxyServer proxy) async {
   }
 
   await proxy.addRule(host: host, path: path, method: method, matchStatus: matchStatus, status: status, body: body, headers: headers.isEmpty ? null : headers);
+}
+
+Future<void> _handleGenRootCrt({required String outPath, String? host, int? port}) async {
+  final pemPath = '${Config.certsDir}/${Config.rootCertFile}';
+  final pemFile = File(pemPath);
+  if (!await pemFile.exists()) {
+    stderr.writeln('Missing ${Config.rootCertFile} in ${Config.certsDir}.');
+    return;
+  }
+  try {
+    // Prefer DER .crt for better OS compatibility
+    final res = await Process.run('openssl', ['x509', '-outform', 'der', '-in', pemPath, '-out', outPath], runInShell: true);
+    if (res.exitCode != 0) {
+      stderr.writeln('Failed to generate .crt: ${res.stderr}');
+      return;
+    }
+  } catch (e) {
+    stderr.writeln('Failed to run openssl: $e');
+    return;
+  }
+
+  print('Generated root CA CRT: $outPath');
+  final url = (host != null && port != null) ? 'http://$host:$port/cert' : null;
+  if (url != null) {
+    print('You can also download via: $url');
+  }
+  print('How to trust this certificate:');
+  print('- Windows: Double-click .crt -> Install Certificate -> Local Machine -> Trusted Root Certification Authorities.');
+  print('- macOS: Keychain Access -> System -> Certificates -> Import .crt, set Trust to Always.');
+  print('- iOS: AirDrop/email .crt -> Settings -> Profile Downloaded -> Install, then Settings -> General -> About -> Certificate Trust Settings -> enable.');
+  print('- Android (>=7): Install via MDM or as user CA (some apps may not trust user CAs). For emulator: place in system store.');
+  print('- Linux: For system-wide trust, add to /usr/local/share/ca-certificates and run update-ca-certificates (Debian/Ubuntu).');
 }
 
 
