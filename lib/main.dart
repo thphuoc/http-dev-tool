@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:httpdevtool/widgets/splitter_panel.dart';
-import 'package:multi_split_view/multi_split_view.dart';
-
 import 'models/http_entry.dart';
 import 'widgets/top_panel.dart';
 import 'widgets/bottom_panel.dart';
@@ -30,10 +28,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int selectedIndex = 0;
   bool detailsExpanded = false;
   double firstColumnHeight = 200;
-  bool _hovering = false;
-  bool _resizing = false;
   late final windowHeight = MediaQuery.of(context).size.height;
-  late final MultiSplitViewController msController;
 
   @override
   void initState() {

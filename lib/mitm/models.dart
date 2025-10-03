@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class MatchSpec {
   final String host; // supports wildcard *.example.com or '*'
   final String pathRegex; // regex string, '' => match any
@@ -86,5 +84,3 @@ class RewriteRule {
         'enabled': enabled,
       };
 }
-
-

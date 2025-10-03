@@ -1,13 +1,11 @@
 import 'dart:convert';
-
-import 'http_message.dart';
 import 'models.dart';
 
 bool _hostMatches(String pattern, String host) {
   if (pattern == '*' || pattern.isEmpty) return true;
   if (pattern.startsWith('*.')) {
     final p = pattern.substring(2);
-    return host == p || host.endsWith('.' + p);
+    return host == p || host.endsWith('.$p');
   }
   return host == pattern;
 }
