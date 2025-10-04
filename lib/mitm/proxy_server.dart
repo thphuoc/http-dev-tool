@@ -9,6 +9,7 @@ import 'mitm_handler.dart';
 import 'models.dart';
 import 'rule_engine.dart';
 import 'rule_store.dart';
+import 'gen_root_ca.dart';
 
 class ProxyServer {
   late final RuleStore _ruleStore;
@@ -183,22 +184,11 @@ class ProxyServer {
     }
 
     if (path == '/cert' || path == '/rootCA.crt') {
-      final crtPath = '${Config.certsDir}/rootCA.crt';
+      final crtPath = Config.rootCertFile;
       var crtFile = File(crtPath);
       if (!await crtFile.exists()) {
         // Try to generate from PEM if available
-        final pemPath = '${Config.certsDir}/${Config.rootCertFile}';
-        final pemFile = File(pemPath);
-        if (await pemFile.exists()) {
-          try {
-            final res = await Process.run('openssl', ['x509', '-outform', 'der', '-in', pemPath, '-out', crtPath], runInShell: true);
-            if (res.exitCode != 0) {
-              stderr.writeln('Failed to generate rootCA.crt: ${res.stderr}');
-            }
-          } catch (e) {
-            stderr.writeln('Failed to run openssl to generate rootCA.crt: $e');
-          }
-        }
+        generateRootCAWithSAN();
       }
       if (!await crtFile.exists()) {
         final notFound = 'HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n';
