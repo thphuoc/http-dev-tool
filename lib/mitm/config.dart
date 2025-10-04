@@ -6,7 +6,12 @@ class Config {
 
   static const String certsDir = 'certs';
   static const String rootKeyFile = 'rootCA.key';
-  static const String rootCertFile = 'rootCA.pem';
+  static const String rootCertFile = 'rootCA.crt';
+  static const String CER_COUNTRY = 'VN';
+  static const String CER_STATE = 'HCM';
+  static const String CER_LOCATION = 'HCM';
+  static const String CER_ORGANIZATION = 'MyProxy';
+  static const String CER_COMMON_NAME = 'rootCA';
 
   static const String rulesFilePath = 'rules.json';
 }

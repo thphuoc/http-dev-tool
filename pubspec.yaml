@@ -41,6 +41,8 @@ dependencies:
   path: ^1.9.1
   args: ^2.4.0
   crypto: ^3.0.6
+  basic_utils: ^5.7.0
+  pointycastle: ^3.9.0
 
 dev_dependencies:
   flutter_test:

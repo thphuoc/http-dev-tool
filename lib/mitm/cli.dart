@@ -73,11 +73,7 @@ Future<void> mitmMain(List<String> argv) async {
       await _handleGenCert(cmd.rest, force: cmd['force'] as bool, certManager: certManager);
       break;
     case 'gen-root-crt':
-      await _handleGenRootCrt(
-        outPath: cmd['out'] as String,
-        host: cmd['host'] as String?,
-        port: cmd['port'] != null ? int.tryParse(cmd['port'] as String) : null,
-      );
+      await _handleGenRootCrt();
       break;
     case 'rewrite':
       final sub = cmd.command;
@@ -181,36 +177,41 @@ Future<void> _cmdRewriteAdd(ArgResults args, ProxyServer proxy) async {
   await proxy.addRule(host: host, path: path, method: method, matchStatus: matchStatus, status: status, body: body, headers: headers.isEmpty ? null : headers);
 }
 
-Future<void> _handleGenRootCrt({required String outPath, String? host, int? port}) async {
-  final pemPath = '${Config.certsDir}/${Config.rootCertFile}';
-  final pemFile = File(pemPath);
-  if (!await pemFile.exists()) {
-    stderr.writeln('Missing ${Config.rootCertFile} in ${Config.certsDir}.');
-    return;
-  }
-  try {
-    // Prefer DER .crt for better OS compatibility
-    final res = await Process.run('openssl', ['x509', '-outform', 'der', '-in', pemPath, '-out', outPath], runInShell: true);
-    if (res.exitCode != 0) {
-      stderr.writeln('Failed to generate .crt: ${res.stderr}');
-      return;
-    }
-  } catch (e) {
-    stderr.writeln('Failed to run openssl: $e');
-    return;
-  }
+Future<String?> getLocalIPv4() async {
+  final interfaces = await NetworkInterface.list(
+    includeLoopback: false,
+    type: InternetAddressType.IPv4,
+  );
 
-  print('Generated root CA CRT: $outPath');
-  final url = (host != null && port != null) ? 'http://$host:$port/cert' : null;
-  if (url != null) {
-    print('You can also download via: $url');
+  for (final iface in interfaces) {
+    for (final addr in iface.addresses) {
+      if (!addr.isLoopback) {
+        return addr.address; // trả về IP đầu tiên tìm thấy
+      }
+    }
   }
-  print('How to trust this certificate:');
-  print('- Windows: Double-click .crt -> Install Certificate -> Local Machine -> Trusted Root Certification Authorities.');
-  print('- macOS: Keychain Access -> System -> Certificates -> Import .crt, set Trust to Always.');
-  print('- iOS: AirDrop/email .crt -> Settings -> Profile Downloaded -> Install, then Settings -> General -> About -> Certificate Trust Settings -> enable.');
-  print('- Android (>=7): Install via MDM or as user CA (some apps may not trust user CAs). For emulator: place in system store.');
-  print('- Linux: For system-wide trust, add to /usr/local/share/ca-certificates and run update-ca-certificates (Debian/Ubuntu).');
+  return null;
+}
+
+Future<void> _handleGenRootCrt() async {
+  final ip = await getLocalIPv4();
+  final keyFile = '${Config.certsDir}/${Config.rootKeyFile}';
+  final crtPath = '${Config.certsDir}/${Config.rootCertFile}';
+  final crtFile = File(crtPath);
+  final cmd = '''
+  openssl req -new -newkey rsa:2048 -nodes -keyout $keyFile -x509 -days 365 \
+    -subj "/C=${Config.CER_COUNTRY}/ST=${Config.CER_STATE}/L=${Config.CER_LOCATION}/O=${Config.CER_ORGANIZATION}/CN=$ip" \
+    -addext "subjectAltName=IP:$ip,DNS:localhost"
+  ''';
+
+  // Run command
+  final result = await Process.run('bash', ['-c', cmd]);
+
+  if (result.exitCode == 0) {
+    print("✅ Generated certificate: $crtFile with SAN=$ip,localhost");
+  } else {
+    print("❌ Error: ${result.stderr}");
+  }
 }
 
 

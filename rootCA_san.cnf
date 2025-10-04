@@ -1,0 +1,23 @@
+[ req ]
+distinguished_name = req_distinguished_name
+x509_extensions = v3_ca
+prompt = no
+
+[ req_distinguished_name ]
+C = VN
+ST = HCM
+L = HCM
+O = MyProxy
+OU = ProxyTeam
+CN = My Proxy Root CA
+
+[ v3_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true, pathlen:0
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+subjectAltName = @alt_names
+
+[ alt_names ]
+IP.1 = 172.16.0.2
+DNS.1 = localhost
